@@ -1,8 +1,10 @@
-# Proyecto 2: Biblioteca Triple Peaks
+# Proyecto Servicio Social
 
-La página web de la Biblioteca Triple Peaks es el segundo proyecto en el programa de Desarrollo web en Triple Ten. Fue creado utilizando HTML y CSS, con base en un brief de diseño.
+Pagina web que muestra los empleados de una empresa ficticia
 
 ## Características del proyecto
 
-- HTML5 semántico
-- Flexbox
+- HTML5
+- CSS
+- JavaScript
+- PhpSpreadsheet
