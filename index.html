@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporte de Empleados</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css"
+    />
+    <script
+      type="text/javascript"
+      charset="utf8"
+      src="https://code.jquery.com/jquery-3.6.0.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      charset="utf8"
+      src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="user-menu-container">
+      <div class="user-menu-trigger" id="userMenuTrigger">
+        <img
+          id="userProfilePic"
+          src="https://cdn-icons-png.flaticon.com/512/4792/4792929.png"
+          alt="Foto de perfil"
+          class="profile-pic"
+        />
+        <span id="userName" class="user-name"></span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="user-menu-dropdown" id="userMenuDropdown">
+        <div class="user-menu-item" id="logoutButton">
+          <i class="fas fa-sign-out-alt"></i>
+          Cerrar Sesión
+        </div>
+      </div>
+    </div>
+    <div class="container">
+      <h1>Reporte de Empleados por Zona</h1>
+
+      <div class="filter-section">
+        <label for="estado">Seleccione una zona:</label>
+        <select id="estado" onchange="mostrarBotonDescarga()">
+          <option value="">Seleccione un estado...</option>
+          <option value="todos">Todos los empleados</option>
+          <!-- Los estados se cargarán dinámicamente aquí -->
+        </select>
+        <button id="boton-descargar-todos" onclick="descargarTodos()">
+          Descargar Todos los Empleados
+        </button>
+      </div>
+
+      <div class="results-section">
+        <table id="empleados-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Apellido</th>
+              <th>Puesto</th>
+              <th>Promedio Calificaciones</th>
+            </tr>
+          </thead>
+          <tbody id="empleados-body">
+            <!-- Los datos se cargarán aquí dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="statistics-section mt-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Tarjeta de estadísticas generales -->
+          <div class="stats-card bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Estadísticas Generales</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="stat-item text-center">
+                <div
+                  class="text-2xl font-bold text-blue-600"
+                  id="totalEmpleados"
+                >
+                  -
+                </div>
+                <div class="text-sm text-gray-600">Total Empleados</div>
+              </div>
+              <div class="stat-item text-center">
+                <div
+                  class="text-2xl font-bold text-green-600"
+                  id="promedioGeneral"
+                >
+                  -
+                </div>
+                <div class="text-sm text-gray-600">Calificación Promedio</div>
+              </div>
+              <div class="stat-item text-center">
+                <div
+                  class="text-2xl font-bold text-purple-600"
+                  id="totalEstados"
+                >
+                  -
+                </div>
+                <div class="text-sm text-gray-600">Estados</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Contenedores para las gráficas -->
+          <div class="chart-container bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Distribución por Estado</h2>
+            <canvas id="distribucionChart"></canvas>
+          </div>
+
+          <div class="chart-container bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">
+              Promedio de Calificaciones por Estado
+            </h2>
+            <canvas id="calificacionesChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor del botón de descarga -->
+      <div id="descargar-contenedor" style="display: none; margin-top: 20px">
+        <button id="boton-descargar" onclick="descargarExcel()">
+          Descargar en formato XLSX
+        </button>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
