@@ -85,13 +85,24 @@ function actualizarGraficas(datos) {
       scales: {
         y: {
           beginAtZero: true,
-          max: 5,
+          // Eliminar el max: 5 para permitir que la escala se ajuste automáticamente
+          ticks: {
+            stepSize: 0.5, // Mostrar incrementos de 0.5
+            precision: 2, // Mostrar 2 decimales
+          },
         },
       },
       plugins: {
         title: {
           display: true,
           text: "Promedio de Calificaciones por Estado",
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `Promedio: ${context.raw.toFixed(2)}`; // Mostrar promedio con 2 decimales
+            },
+          },
         },
       },
     },
@@ -289,103 +300,4 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .catch((error) => console.error("Error al cerrar sesión:", error));
   });
-
-  // Variables globales para las gráficas
-  let distribucionChart = null;
-  let calificacionesChart = null;
-
-  // Función para cargar y mostrar las estadísticas
-  function cargarEstadisticas() {
-    fetch("obtener_datos.php?action=getStats")
-      .then((response) => response.json())
-      .then((data) => {
-        actualizarEstadisticasGenerales(data.generales);
-        actualizarGraficas(data.distribucion);
-      })
-      .catch((error) => console.error("Error al cargar estadísticas:", error));
-  }
-
-  // Función para actualizar las estadísticas generales
-  function actualizarEstadisticasGenerales(datos) {
-    document.getElementById("totalEmpleados").textContent =
-      datos.total_empleados;
-    document.getElementById("promedioGeneral").textContent =
-      datos.promedio_general;
-    document.getElementById("totalEstados").textContent = datos.total_estados;
-  }
-
-  // Función para actualizar las gráficas
-  function actualizarGraficas(datos) {
-    const estados = datos.map((item) => item.estado);
-    const cantidades = datos.map((item) => item.cantidad_empleados);
-    const promedios = datos.map((item) => item.promedio_calificacion);
-
-    // Destruir gráficas existentes si las hay
-    if (distribucionChart) distribucionChart.destroy();
-    if (calificacionesChart) calificacionesChart.destroy();
-
-    // Crear gráfica de distribución
-    const ctxDistribucion = document
-      .getElementById("distribucionChart")
-      .getContext("2d");
-    distribucionChart = new Chart(ctxDistribucion, {
-      type: "pie",
-      data: {
-        labels: estados,
-        datasets: [
-          {
-            data: cantidades,
-            backgroundColor: estados.map(
-              (_, i) => `hsl(${(i * 360) / estados.length}, 70%, 60%)`
-            ),
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: "right",
-          },
-          title: {
-            display: true,
-            text: "Empleados por Estado",
-          },
-        },
-      },
-    });
-
-    // Crear gráfica de calificaciones
-    const ctxCalificaciones = document
-      .getElementById("calificacionesChart")
-      .getContext("2d");
-    calificacionesChart = new Chart(ctxCalificaciones, {
-      type: "bar",
-      data: {
-        labels: estados,
-        datasets: [
-          {
-            label: "Promedio de Calificaciones",
-            data: promedios,
-            backgroundColor: "rgba(54, 162, 235, 0.8)",
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 5,
-          },
-        },
-        plugins: {
-          title: {
-            display: true,
-            text: "Promedio de Calificaciones por Estado",
-          },
-        },
-      },
-    });
-  }
 });
