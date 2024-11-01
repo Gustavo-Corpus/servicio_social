@@ -104,20 +104,20 @@ function obtenerEstadisticasEmpleados() {
   try {
       // Distribución de empleados por estado
       $queryDistribucion = "
-          SELECT
-              e.estado,
-              COUNT(u.id_usuarios) as cantidad_empleados,
-              ROUND(AVG(ev.calificacion), 2) as promedio_calificacion
-          FROM estados e
-          LEFT JOIN usuarios u ON e.id_estado = u.id_estado
-          LEFT JOIN evaluaciones ev ON u.id_usuarios = ev.id_usuario
-          GROUP BY e.estado
-          ORDER BY cantidad_empleados DESC
-      ";
+      SELECT
+          e.estado,
+          COUNT(DISTINCT u.id_usuarios) as cantidad_empleados,
+          ROUND(AVG(ev.calificacion), 2) as promedio_calificacion
+      FROM estados e
+      LEFT JOIN usuarios u ON e.id_estado = u.id_estado
+      LEFT JOIN evaluaciones ev ON u.id_usuarios = ev.id_usuario
+      GROUP BY e.estado, e.id_estado
+      ORDER BY cantidad_empleados DESC
+  ";
 
-      $stmt = $pdo->prepare($queryDistribucion);
-      $stmt->execute();
-      $distribucion = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  $stmt = $pdo->prepare($queryDistribucion);
+  $stmt->execute();
+  $distribucion = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
       // Estadísticas generales
       $queryGenerales = "
