@@ -180,3 +180,35 @@ button {
 button:hover {
   background-color: #1a242f;
 }
+
+.footer {
+  background-color: #333; /* Color de fondo del footer */
+  color: #fff; /* Color del texto */
+  padding: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.footer__container {
+  max-width: 1200px;
+  margin: 0 auto; /* Centra el contenedor */
+  display: flex;
+  flex-direction: column; /* Apila verticalmente */
+  align-items: center;
+  gap: 10px;
+}
+
+.footer__links {
+  display: flex;
+  gap: 15px;
+}
+
+.footer__links a {
+  color: #ffffff;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer__links a:hover {
+  color: #00bcd4; /* Cambia el color al pasar el mouse */
+}
