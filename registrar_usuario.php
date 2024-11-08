@@ -28,20 +28,42 @@ $sql_check = "SELECT * FROM users WHERE username = '$username'";
 $result_check = $conn->query($sql_check);
 
 if ($result_check->num_rows > 0) {
-    echo "El nombre de usuario ya está en uso. Inténtelo con otro nombre.";
+    $mensaje = "El nombre de usuario ya está en uso. Inténtelo con otro nombre.";
+    $ruta = "login.html";
+    $textoBoton = "Volver a Registrarse";
 } else {
     // Insertar el nuevo usuario en la base de datos
     $sql_insert = "INSERT INTO users (username, password, created_at) VALUES ('$username', '$passwordHash', NOW())";
 
     if ($conn->query($sql_insert) === TRUE) {
-        echo "Usuario registrado exitosamente. Ahora puede iniciar sesión.";
-        // Aquí podrías redirigir al usuario al login
-        // header("Location: login.html");
+        $mensaje = "Usuario registrado exitosamente. Ahora puede iniciar sesión.";
+        $ruta = "login.html";
+        $textoBoton = "Iniciar Sesión";
     } else {
-        echo "Error: " . $sql_insert . "<br>" . $conn->error;
+        $mensaje = "Error al registrar el usuario: " . $conn->error;
+        $ruta = "login.html";
+        $textoBoton = "Volver";
     }
 }
 
 // Cerrar conexión
 $conn->close();
 ?>
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado de Registro</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+
+<body>
+    <div class="mensaje-container">
+        <h2><?php echo $mensaje; ?></h2>
+        <a href="<?php echo $ruta; ?>" class="boton"><?php echo $textoBoton; ?></a>
+    </div>
+</body>
+
+</html>
