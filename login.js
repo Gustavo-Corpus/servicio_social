@@ -89,4 +89,49 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   }
+
+  // Código para alternar entre formularios en diseño móvil
+  const loginFormContainer = container.querySelector(".sign-in");
+  const registerFormContainer = container.querySelector(".sign-up");
+
+  // Crear botones para alternar en vista móvil
+  const mobileButtons = document.createElement("div");
+  mobileButtons.classList.add("mobile-buttons");
+
+  const loginToggleButton = document.createElement("button");
+  loginToggleButton.textContent = "Iniciar Sesión";
+  loginToggleButton.classList.add("active");
+
+  const registerToggleButton = document.createElement("button");
+  registerToggleButton.textContent = "Crear Cuenta";
+
+  mobileButtons.appendChild(loginToggleButton);
+  mobileButtons.appendChild(registerToggleButton);
+  container.insertBefore(mobileButtons, loginFormContainer);
+
+  console.log("Mobile buttons added to the DOM."); // Mensaje para verificar en consola
+
+  // Funciones para mostrar el formulario correspondiente
+  function showLogin() {
+    loginFormContainer.classList.add("active");
+    registerFormContainer.classList.remove("active");
+    loginToggleButton.classList.add("active");
+    registerToggleButton.classList.remove("active");
+    mobileButtons.style.display = "flex"; // Asegura que los botones estén visibles
+  }
+
+  function showRegister() {
+    registerFormContainer.classList.add("active");
+    loginFormContainer.classList.remove("active");
+    registerToggleButton.classList.add("active");
+    loginToggleButton.classList.remove("active");
+    mobileButtons.style.display = "flex"; // Asegura que los botones estén visibles
+  }
+
+  // Eventos de clic para alternar entre formularios
+  loginToggleButton.addEventListener("click", showLogin);
+  registerToggleButton.addEventListener("click", showRegister);
+
+  // Inicializar mostrando el formulario de inicio de sesión
+  showLogin();
 });
