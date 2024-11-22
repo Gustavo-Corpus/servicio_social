@@ -31,9 +31,14 @@
           alt="Foto de perfil"
           class="profile-pic"
         />
+        <span id="userName" class="user-name"></span>
+        <i class="fas fa-chevron-down"></i>
       </div>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <div class="user-menu-item" id="logoutButton">Cerrar Sesión</div>
+        <div class="user-menu-item" id="logoutButton">
+          <i class="fas fa-sign-out-alt"></i>
+          Cerrar Sesión
+        </div>
       </div>
     </div>
     <div class="container">
@@ -104,7 +109,7 @@
             </div>
           </div>
 
-          <!-- Ejemplo de grafica-->
+          <!-- Ejemplo -->
           <div class="chart-container bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-xl font-bold mb-4">Distribución por Estado</h2>
             <canvas id="distribucionChart"></canvas>
@@ -114,13 +119,13 @@
             <h2 class="text-xl font-bold mb-4">
               Promedio de Calificaciones por Estado
             </h2>
-            <canvas id="calificacionesChart" class="grafica-barras"></canvas>
+            <canvas id="calificacionesChart"></canvas>
           </div>
         </div>
       </div>
 
       <!-- Contenedor del botón de descarga -->
-      <div id="descargar-contenedor" class="button-download">
+      <div id="descargar-contenedor" style="display: none; margin-top: 20px">
         <button id="boton-descargar" onclick="descargarExcel()">
           Descargar en formato XLSX
         </button>
