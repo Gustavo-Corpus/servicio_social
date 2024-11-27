@@ -1,0 +1,138 @@
+/* General */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+.wrapper {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+/* Encabezados */
+.page-header h2 {
+    font-size: 1.8rem;
+    color: #5a5a5a;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+}
+
+/* Botones */
+button, .btn {
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #ffffff;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: #ffffff;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: #ffffff;
+}
+
+.btn-default {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* Formularios */
+.form-inline input {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-right: 10px;
+}
+
+.form-inline button {
+    margin-top: 5px;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+table th {
+    background-color: #007bff;
+    color: #ffffff;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Mensajes */
+.lead {
+    font-size: 1rem;
+    color: #777;
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Botones de acción */
+table tr td a {
+    margin-right: 10px;
+    color: #007bff;
+}
+
+table tr td a:hover {
+    text-decoration: none;
+}
+
+/* Responsividad */
+@media screen and (max-width: 768px) {
+    .wrapper {
+        padding: 15px;
+    }
+
+    .form-inline {
+        display: block;
+    }
+
+    .form-inline input, .form-inline button {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .page-header h2 {
+        font-size: 1.5rem;
+    }
+}
