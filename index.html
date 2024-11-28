@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reporte de Empleados</title>
+    <title>Reporte de Empleados por Estado</title>
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="styles.css" />
+    <!-- DataTables -->
     <link
       rel="stylesheet"
       type="text/css"
       href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.css"
     />
-    <script
-      type="text/javascript"
-      charset="utf8"
-      src="https://code.jquery.com/jquery-3.6.0.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      charset="utf8"
-      src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"
-    ></script>
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
+    <!-- Menú de Usuario -->
     <div class="user-menu-container">
-      <div class="user-menu-trigger" id="userMenuTrigger">
+      <div id="userMenuTrigger" class="user-menu-trigger">
         <img
           id="userProfilePic"
           src="https://cdn-icons-png.flaticon.com/512/4792/4792929.png"
@@ -32,57 +32,76 @@
           class="profile-pic"
         />
         <span id="userName" class="user-name"></span>
-        <i class="fas fa-chevron-down"></i>
       </div>
-      <div class="user-menu-dropdown" id="userMenuDropdown">
-        <div class="user-menu-item" id="logoutButton">
-          <i class="fas fa-sign-out-alt"></i>
-          Cerrar Sesión
-        </div>
+
+      <div id="userMenuDropdown" class="user-menu-dropdown">
+        <div id="logoutButton" class="user-menu-item">Cerrar Sesión</div>
       </div>
     </div>
-    <div class="container">
-      <h1>Reporte de Empleados por Estado</h1>
 
-      <div class="filter-section">
-        <label for="estado">Seleccione una zona:</label>
-        <select id="estado" onchange="mostrarBotonDescarga()">
-          <option value="">Seleccione un estado...</option>
-          <option value="todos">Todos los empleados</option>
-          <!-- Los estados se cargarán dinámicamente aquí -->
-        </select>
-        <button id="boton-descargar-todos" onclick="descargarTodos()">
-          Descargar Todos los Empleados
-        </button>
+    <!-- Contenedor Principal -->
+    <div class="container">
+      <h1 class="text-2xl font-bold text-center mb-6">
+        Reporte de Empleados por Estado
+      </h1>
+
+      <!-- Sección de Filtros -->
+      <div class="filter-section mb-6">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center gap-4">
+            <label for="estado">Seleccione una zona:</label>
+            <select id="estado" class="form-select">
+              <option value="">Seleccione un estado...</option>
+            </select>
+          </div>
+          <button
+            onclick="descargarTodos()"
+            class="bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Descargar Todos los Empleados
+          </button>
+        </div>
       </div>
 
+      <!-- Sección de Resultados -->
       <div class="results-section">
-        <table id="empleados-table">
+        <!-- Botón Nuevo Empleado -->
+        <div class="mb-4 flex justify-end">
+          <button
+            id="btnNuevoEmpleado"
+            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center"
+          >
+            <i class="fas fa-plus mr-2"></i> Nuevo Empleado
+          </button>
+        </div>
+
+        <!-- Tabla de Empleados -->
+        <table id="empleados-table" class="w-full">
           <thead>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
               <th>Apellido</th>
               <th>Puesto</th>
-              <th>Promedio Calificaciones</th>
+              <th>Promedio</th>
+              <th>Acciones</th>
             </tr>
           </thead>
-          <tbody id="empleados-body">
-            <!-- Los datos se cargarán aquí dinámicamente -->
-          </tbody>
+          <tbody id="empleados-body"></tbody>
         </table>
       </div>
 
+      <!-- Sección de Estadísticas -->
       <div class="statistics-section mt-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Tarjeta de estadísticas generales -->
+          <!-- Estadísticas Generales -->
           <div class="stats-card bg-white p-6 rounded-lg shadow-md">
             <h2 class="text-xl font-bold mb-4">Estadísticas Generales</h2>
             <div class="grid grid-cols-3 gap-4">
               <div class="stat-item text-center">
                 <div
-                  class="text-2xl font-bold text-blue-600"
                   id="totalEmpleados"
+                  class="text-2xl font-bold text-blue-600"
                 >
                   -
                 </div>
@@ -90,8 +109,8 @@
               </div>
               <div class="stat-item text-center">
                 <div
-                  class="text-2xl font-bold text-green-600"
                   id="promedioGeneral"
+                  class="text-2xl font-bold text-green-600"
                 >
                   -
                 </div>
@@ -99,8 +118,8 @@
               </div>
               <div class="stat-item text-center">
                 <div
-                  class="text-2xl font-bold text-purple-600"
                   id="totalEstados"
+                  class="text-2xl font-bold text-purple-600"
                 >
                   -
                 </div>
@@ -109,40 +128,141 @@
             </div>
           </div>
 
-          <!-- Ejemplo -->
-          <div class="chart-container bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4">Distribución por Estado</h2>
-            <canvas id="distribucionChart"></canvas>
-          </div>
-
-          <div class="chart-container bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-bold mb-4">
-              Promedio de Calificaciones por Estado
-            </h2>
-            <canvas id="calificacionesChart"></canvas>
+          <!-- Gráficas -->
+          <div class="charts-container">
+            <div class="chart-container bg-white p-6 rounded-lg shadow-md mb-6">
+              <h2 class="text-xl font-bold mb-4">Distribución por Estado</h2>
+              <canvas id="distribucionChart"></canvas>
+            </div>
+            <div class="chart-container bg-white p-6 rounded-lg shadow-md">
+              <h2 class="text-xl font-bold mb-4">
+                Promedio de Calificaciones por Estado
+              </h2>
+              <canvas id="calificacionesChart"></canvas>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Contenedor del botón de descarga -->
+      <!-- Contenedor de Descarga -->
       <div id="descargar-contenedor" style="display: none; margin-top: 20px">
-        <button id="boton-descargar" onclick="descargarExcel()">
+        <button
+          onclick="descargarExcel()"
+          class="bg-green-500 text-white px-4 py-2 rounded"
+        >
           Descargar en formato XLSX
         </button>
       </div>
     </div>
-    <script src="script.js"></script>
-    <footer class="footer">
-      <div class="footer__container">
-        <div class="footer__links">
-          <a href="#">Aviso de Privacidad</a>
-          <a href="#">Términos y Condiciones</a>
-          <a href="#">Contacto</a>
-        </div>
-        <div class="footer__copyright">
-          <p>© 2024 Servicio Social. Todos los derechos reservados.</p>
-        </div>
+
+    <!-- Modal para Crear/Editar Empleado -->
+    <div id="empleadoModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <h2 id="modalTitle" class="text-xl font-bold mb-4">Nuevo Empleado</h2>
+        <form id="empleadoForm">
+          <input type="hidden" id="empleadoId" name="id" />
+
+          <div class="form-group">
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required />
+          </div>
+
+          <div class="form-group">
+            <label for="apellido">Apellido:</label>
+            <input type="text" id="apellido" name="apellido" required />
+          </div>
+
+          <div class="form-group">
+            <label for="sexo">Sexo:</label>
+            <select
+              id="sexo"
+              name="sexo"
+              required
+              class="w-full p-2 border rounded"
+            >
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="correo">Correo:</label>
+            <input type="email" id="correo" name="correo" required />
+          </div>
+
+          <div class="form-group">
+            <label for="edad">Edad:</label>
+            <input
+              type="number"
+              id="edad"
+              name="edad"
+              required
+              min="18"
+              max="100"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="direccion">Dirección:</label>
+            <input type="text" id="direccion" name="direccion" required />
+          </div>
+
+          <div class="form-group">
+            <label for="ocupacion">Ocupación:</label>
+            <input type="text" id="ocupacion" name="ocupacion" required />
+          </div>
+
+          <div class="form-group">
+            <label for="id_departamento">Departamento:</label>
+            <select
+              id="id_departamento"
+              name="id_departamento"
+              required
+            ></select>
+          </div>
+
+          <div class="form-group">
+            <label for="id_estado">Estado:</label>
+            <select id="id_estado" name="id_estado" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="estatus">Estatus:</label>
+            <select id="estatus" name="estatus" required>
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+          </div>
+
+          <div class="button-group">
+            <button type="button" class="btn-cancel" onclick="cerrarModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-save">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer__container">
+      <div class="footer__links">
+        <a href="#">Aviso de Privacidad</a>
+        <a href="#">Términos y Condiciones</a>
+        <a href="#">Contacto</a>
+      </div>
+      <div class="footer__copyright">
+        © 2024 Servicio Social. Todos los derechos reservados.
       </div>
     </footer>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script
+      type="text/javascript"
+      charset="utf8"
+      src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.js"
+    ></script>
+    <script src="script.js"></script>
   </body>
 </html>

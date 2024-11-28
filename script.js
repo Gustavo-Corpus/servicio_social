@@ -1,8 +1,11 @@
-// script.js
-
 // Variables globales para las gráficas
 let distribucionChart = null;
 let calificacionesChart = null;
+
+// Variables para el CRUD
+let editandoId = null;
+const modal = document.getElementById("empleadoModal");
+const form = document.getElementById("empleadoForm");
 
 // Función para cargar y mostrar las estadísticas
 function cargarEstadisticas() {
@@ -85,10 +88,9 @@ function actualizarGraficas(datos) {
       scales: {
         y: {
           beginAtZero: true,
-          // Eliminar el max: 5 para permitir que la escala se ajuste automáticamente
           ticks: {
-            stepSize: 0.5, // Mostrar incrementos de 0.5
-            precision: 2, // Mostrar 2 decimales
+            stepSize: 0.5,
+            precision: 2,
           },
         },
       },
@@ -100,7 +102,7 @@ function actualizarGraficas(datos) {
         tooltip: {
           callbacks: {
             label: function (context) {
-              return `Promedio: ${context.raw.toFixed(2)}`; // Mostrar promedio con 2 decimales
+              return `Promedio: ${context.raw.toFixed(2)}`;
             },
           },
         },
@@ -109,7 +111,169 @@ function actualizarGraficas(datos) {
   });
 }
 
-// Función para verificar autenticación
+// Funciones CRUD
+async function crearEmpleado(datosEmpleado) {
+  try {
+    const response = await fetch("crud_operations.php?action=create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(datosEmpleado),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return data;
+    } else {
+      throw new Error(data.error);
+    }
+  } catch (error) {
+    console.error("Error al crear empleado:", error);
+    throw error;
+  }
+}
+
+async function actualizarEmpleado(id, datosEmpleado) {
+  try {
+    const response = await fetch(`crud_operations.php?action=update&id=${id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(datosEmpleado),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return data;
+    } else {
+      throw new Error(data.error);
+    }
+  } catch (error) {
+    console.error("Error al actualizar empleado:", error);
+    throw error;
+  }
+}
+
+async function eliminarEmpleado(id) {
+  if (!confirm("¿Está seguro de que desea eliminar este empleado?")) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`crud_operations.php?action=delete&id=${id}`, {
+      method: "POST",
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      cargarEmpleados(document.getElementById("estado").value);
+      cargarEstadisticas();
+      mostrarMensaje("Empleado eliminado exitosamente", "success");
+      return data;
+    } else {
+      throw new Error(data.error);
+    }
+  } catch (error) {
+    console.error("Error al eliminar empleado:", error);
+    mostrarMensaje("Error al eliminar empleado", "error");
+    throw error;
+  }
+}
+
+async function cargarCatalogos() {
+  try {
+    console.log("Iniciando carga de catálogos...");
+
+    // Cargar departamentos
+    const respDepartamentos = await fetch(
+      "crud_operations.php?action=getDepartamentos"
+    );
+    const textoDepartamentos = await respDepartamentos.text(); // Primero obtener el texto
+    console.log("Respuesta departamentos:", textoDepartamentos); // Debug
+
+    const departamentos = JSON.parse(textoDepartamentos);
+    if (!departamentos.success) {
+      throw new Error(departamentos.error || "Error al obtener departamentos");
+    }
+
+    const selectDepartamento = document.getElementById("id_departamento");
+    if (selectDepartamento) {
+      selectDepartamento.innerHTML =
+        '<option value="">Seleccione un departamento...</option>' +
+        departamentos.data
+          .map(
+            (d) =>
+              `<option value="${d.id_departamento}">${d.nombre_departamento}</option>`
+          )
+          .join("");
+    }
+
+    // Cargar estados
+    const respEstados = await fetch("cargar_estados.php");
+    const textoEstados = await respEstados.text(); // Primero obtener el texto
+    console.log("Respuesta estados:", textoEstados); // Debug
+
+    const estados = JSON.parse(textoEstados);
+    const selectEstado = document.getElementById("id_estado");
+    if (selectEstado) {
+      selectEstado.innerHTML =
+        '<option value="">Seleccione un estado...</option>' +
+        estados
+          .map((e) => `<option value="${e.id_estado}">${e.estado}</option>`)
+          .join("");
+    }
+
+    console.log("Catálogos cargados exitosamente");
+  } catch (error) {
+    console.error("Error detallado al cargar catálogos:", error);
+    console.log("Stack trace:", error.stack);
+    alert("Error al cargar los catálogos: " + error.message);
+  }
+}
+
+// Funciones del Modal
+function abrirModalCrear() {
+  editandoId = null;
+  document.getElementById("modalTitle").textContent = "Nuevo Empleado";
+  form.reset();
+  cargarCatalogos();
+  modal.style.display = "block";
+}
+
+function abrirModalEditar(empleado) {
+  editandoId = empleado.id_usuarios;
+  document.getElementById("modalTitle").textContent = "Editar Empleado";
+
+  cargarCatalogos().then(() => {
+    document.getElementById("nombre").value = empleado.nombre;
+    document.getElementById("apellido").value = empleado.apellido;
+    document.getElementById("sexo").value = empleado.sexo;
+    document.getElementById("correo").value = empleado.correo;
+    document.getElementById("edad").value = empleado.edad;
+    document.getElementById("direccion").value = empleado.direccion;
+    document.getElementById("ocupacion").value = empleado.ocupacion;
+    document.getElementById("id_departamento").value = empleado.id_departamento;
+    document.getElementById("id_estado").value = empleado.id_estado;
+    document.getElementById("estatus").value = empleado.estatus;
+  });
+
+  modal.style.display = "block";
+}
+
+function cerrarModal() {
+  modal.style.display = "none";
+  form.reset();
+  editandoId = null;
+}
+
+// Función para mostrar mensajes
+function mostrarMensaje(mensaje, tipo) {
+  alert(mensaje); // Puedes reemplazar esto con una implementación más elegante
+}
+
+// Funciones existentes
 function verificarAutenticacion() {
   fetch("verificar_sesion.php")
     .then((response) => response.json())
@@ -123,7 +287,6 @@ function verificarAutenticacion() {
     });
 }
 
-// Función para obtener y mostrar los datos del usuario
 function cargarDatosUsuario() {
   fetch("obtener_datos.php?action=getUserData")
     .then((response) => response.json())
@@ -140,28 +303,21 @@ function cargarDatosUsuario() {
     );
 }
 
-// Función para mostrar el botón de descarga
 function mostrarBotonDescarga() {
-  console.log("mostrarBotonDescarga llamada");
   const zona = document.getElementById("estado").value;
-  console.log("Zona seleccionada:", zona);
   const contenedorDescarga = document.getElementById("descargar-contenedor");
 
   if (zona && zona !== "Seleccione un estado...") {
-    console.log("Mostrando botón de descarga");
     contenedorDescarga.style.display = "block";
   } else {
-    console.log("Ocultando botón de descarga");
     contenedorDescarga.style.display = "none";
   }
 }
 
-// Función para descargar el archivo Excel con todos los empleados
 function descargarTodos() {
   window.location.href = "generar_excel_todos.php";
 }
 
-// Función para descargar el archivo Excel
 function descargarExcel() {
   const zona = document.getElementById("estado").value;
   if (zona && zona !== "Seleccione un estado...") {
@@ -169,7 +325,7 @@ function descargarExcel() {
   }
 }
 
-// Manejo del menú desplegable y carga de datos
+// Event Listener principal
 document.addEventListener("DOMContentLoaded", function () {
   // Verificar autenticación primero
   verificarAutenticacion();
@@ -180,43 +336,82 @@ document.addEventListener("DOMContentLoaded", function () {
   // Cargar datos del usuario
   cargarDatosUsuario();
 
+  // CRUD Event Listeners
+  const btnNuevoEmpleado = document.getElementById("btnNuevoEmpleado");
+  if (btnNuevoEmpleado) {
+    btnNuevoEmpleado.addEventListener("click", abrirModalCrear);
+  }
+
+  const empleadoForm = document.getElementById("empleadoForm");
+  if (empleadoForm) {
+    empleadoForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      // Recoger todos los datos del formulario
+      const datosEmpleado = {
+        nombre: document.getElementById("nombre").value,
+        apellido: document.getElementById("apellido").value,
+        sexo: document.getElementById("sexo").value,
+        correo: document.getElementById("correo").value,
+        edad: document.getElementById("edad").value,
+        direccion: document.getElementById("direccion").value,
+        ocupacion: document.getElementById("ocupacion").value,
+        id_departamento: document.getElementById("id_departamento").value,
+        id_estado: document.getElementById("id_estado").value,
+        estatus: document.getElementById("estatus").value,
+      };
+
+      try {
+        console.log("Datos a enviar:", datosEmpleado); // Debug
+
+        const response = await fetch("crud_operations.php?action=create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(datosEmpleado),
+        });
+
+        const result = await response.json();
+        console.log("Respuesta del servidor:", result); // Debug
+
+        if (result.success) {
+          alert("Empleado creado exitosamente");
+          cerrarModal();
+          // Recargar la tabla
+          const estadoActual = document.getElementById("estado").value;
+          await cargarEmpleados(estadoActual);
+          await cargarEstadisticas();
+        } else {
+          throw new Error(result.error || "Error al crear empleado");
+        }
+      } catch (error) {
+        console.error("Error completo:", error);
+        alert("Error al crear empleado: " + error.message);
+      }
+    });
+  }
+
+  // Resto de tu código existente para la carga de estados y manejo de eventos
   const estadoSelect = document.getElementById("estado");
   const empleadosBody = document.getElementById("empleados-body");
 
-  console.log("DOM fully loaded. Fetching estados...");
-
   // Cargar estados
   fetch("cargar_estados.php")
-    .then((response) => {
-      console.log("Response received:", response);
-      return response.json();
-    })
+    .then((response) => response.json())
     .then((data) => {
-      console.log("Estados data:", data);
       data.forEach((estado) => {
         const option = document.createElement("option");
         option.value = estado.id_estado;
         option.textContent = estado.estado;
         estadoSelect.appendChild(option);
       });
-      console.log("Estados loaded into select");
     })
     .catch((error) => console.error("Error al cargar estados:", error));
 
-  // Función para inicializar DataTables
-  function inicializarDataTable() {
-    $("#empleados-table").DataTable({
-      destroy: true, // Destruye cualquier DataTable anterior para evitar conflictos al recargar datos
-      language: {
-        url: "//cdn.datatables.net/plug-ins/1.13.1/i18n/Spanish.json", // Traducción al español
-      },
-    });
-  }
-
-  // Modificar el evento change del select
+  // Evento change del select de estados
   estadoSelect.addEventListener("change", function () {
     const estadoId = this.value;
-    console.log("Estado seleccionado:", estadoId);
     mostrarBotonDescarga();
 
     if (!estadoId) {
@@ -224,7 +419,6 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // Destruir la instancia de DataTables existente (si la hay)
     if ($.fn.DataTable.isDataTable("#empleados-table")) {
       $("#empleados-table").DataTable().clear().destroy();
     }
@@ -232,42 +426,49 @@ document.addEventListener("DOMContentLoaded", function () {
     fetch(`obtener_datos.php?action=getEmployees&estado=${estadoId}`)
       .then((response) => response.json())
       .then((data) => {
-        console.log("Empleados data:", data);
-        empleadosBody.innerHTML = "";
-
-        // Insertar los nuevos datos en la tabla
         empleadosBody.innerHTML = data
           .map(
             (empleado) => `
-                  <tr>
-                      <td>${empleado.id_usuarios}</td>
-                      <td>${empleado.nombre}</td>
-                      <td>${empleado.apellido}</td>
-                      <td>${empleado.ocupacion || "No especificado"}</td>
-                      <td>${
-                        empleado.promedio_calificacion || "Sin evaluaciones"
-                      }</td>
-                  </tr>
-              `
+                    <tr>
+                        <td>${empleado.id_usuarios}</td>
+                        <td>${empleado.nombre}</td>
+                        <td>${empleado.apellido}</td>
+                        <td>${empleado.ocupacion || "No especificado"}</td>
+                        <td>${
+                          empleado.promedio_calificacion || "Sin evaluaciones"
+                        }</td>
+                        <td class="action-buttons">
+                            <button class="btn-edit" onclick='abrirModalEditar(${JSON.stringify(
+                              empleado
+                            )})'>
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-delete" onclick="eliminarEmpleado(${
+                              empleado.id_usuarios
+                            })">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `
           )
           .join("");
 
-        // Inicializar DataTables con opciones adicionales para manejar más datos
         $("#empleados-table").DataTable({
           language: {
             url: "//cdn.datatables.net/plug-ins/1.13.1/i18n/Spanish.json",
           },
-          pageLength: 25, // Mostrar más registros por página
-          order: [[1, "asc"]], // Ordenar por nombre por defecto
-          responsive: true, // Hacer la tabla responsive
+          pageLength: 25,
+          order: [[1, "asc"]],
+          responsive: true,
         });
       })
       .catch((error) => {
         console.error("Error:", error);
         empleadosBody.innerHTML =
-          '<tr><td colspan="5">Error al cargar los datos</td></tr>';
+          '<tr><td colspan="6">Error al cargar los datos</td></tr>';
       });
-    cargarEstadisticas(); // Actualizar estadísticas después de cambiar la selección
+    cargarEstadisticas();
   });
 
   // Manejo del menú de usuario
@@ -279,7 +480,6 @@ document.addEventListener("DOMContentLoaded", function () {
     userMenuDropdown.classList.toggle("active");
   });
 
-  // Cerrar el menú al hacer clic fuera
   document.addEventListener("click", function (event) {
     if (
       !userMenuTrigger.contains(event.target) &&
@@ -289,7 +489,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // Manejar el cierre de sesión
   logoutButton.addEventListener("click", function () {
     fetch("cerrar_sesion.php")
       .then((response) => response.json())
