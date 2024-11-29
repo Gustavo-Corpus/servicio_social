@@ -1,3 +1,14 @@
+window.onerror = function (msg, url, line, col, error) {
+  console.error("%cError no manejado:", "color: red; font-weight: bold", {
+    mensaje: msg,
+    url: url,
+    linea: line,
+    columna: col,
+    error: error,
+  });
+  return false;
+};
+
 // Variables globales para las gráficas
 let distribucionChart = null;
 let calificacionesChart = null;
@@ -168,17 +179,248 @@ async function eliminarEmpleado(id) {
 
     const data = await response.json();
     if (data.success) {
-      cargarEmpleados(document.getElementById("estado").value);
-      cargarEstadisticas();
-      mostrarMensaje("Empleado eliminado exitosamente", "success");
-      return data;
+      // En lugar de llamar a cargarEmpleados, disparamos el evento change en el select
+      const estadoSelect = document.getElementById("estado");
+      if (estadoSelect) {
+        const event = new Event("change");
+        estadoSelect.dispatchEvent(event);
+      }
+
+      // Actualizar estadísticas
+      await cargarEstadisticas();
+      alert("Empleado eliminado exitosamente");
     } else {
-      throw new Error(data.error);
+      throw new Error(data.error || "Error al eliminar empleado");
     }
   } catch (error) {
     console.error("Error al eliminar empleado:", error);
-    mostrarMensaje("Error al eliminar empleado", "error");
-    throw error;
+    alert("Error al eliminar empleado");
+  }
+}
+
+// Función auxiliar para obtener el nombre del mes
+function getNombreMes(mes) {
+  const meses = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+  return meses[mes - 1] || "";
+}
+
+function cerrarModalEvaluacion() {
+  try {
+    const evaluacionModal = document.getElementById("evaluacionModal");
+    const evaluacionForm = document.getElementById("evaluacionForm");
+
+    if (!evaluacionModal || !evaluacionForm) {
+      console.error("No se encontraron elementos del modal");
+      return;
+    }
+
+    // Ocultar el modal
+    evaluacionModal.style.display = "none";
+
+    // Limpiar el formulario y campos ocultos
+    evaluacionForm.reset();
+    document.getElementById("evaluacionId").value = "";
+    document.getElementById("empleadoIdEval").value = "";
+
+    // Restaurar texto del botón
+    const submitButton = evaluacionForm.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.textContent = "Guardar Evaluación";
+    }
+
+    // Recargar datos si es necesario
+    const estadoSeleccionado = document.getElementById("estado").value;
+    if (estadoSeleccionado) {
+      // Disparar el evento change para recargar la tabla
+      const event = new Event("change");
+      document.getElementById("estado").dispatchEvent(event);
+    }
+  } catch (error) {
+    console.error("Error al cerrar modal:", error);
+  }
+}
+
+// Función para llenar el select de años
+function llenarSelectAnios() {
+  const selectAnio = document.getElementById("anio");
+  const anioActual = new Date().getFullYear();
+  const anioInicial = 2020; // Puedes ajustar este año según necesites
+
+  selectAnio.innerHTML = "";
+  for (let anio = anioActual; anio >= anioInicial; anio--) {
+    const option = document.createElement("option");
+    option.value = anio;
+    option.textContent = anio;
+    selectAnio.appendChild(option);
+  }
+}
+
+// Función para abrir el modal de evaluación
+async function abrirModalEvaluacion(empleadoId, nombreCompleto) {
+  try {
+    document.getElementById("empleadoIdEval").value = empleadoId;
+    document.getElementById(
+      "evaluacionTitle"
+    ).textContent = `Evaluar a ${nombreCompleto}`;
+
+    // Llenar select de años
+    llenarSelectAnios();
+
+    // Establecer el año y mes actual por defecto
+    const fecha = new Date();
+    document.getElementById("anio").value = fecha.getFullYear();
+    document.getElementById("mes").value = fecha.getMonth() + 1;
+
+    // Cargar evaluaciones existentes
+    await cargarEvaluacionesEmpleado(empleadoId);
+
+    evaluacionModal.style.display = "block";
+  } catch (error) {
+    console.error("Error al abrir modal de evaluación:", error);
+    alert("Error al cargar las evaluaciones del empleado");
+  }
+}
+
+// Función para cargar evaluaciones existentes
+async function cargarEvaluacionesEmpleado(empleadoId) {
+  try {
+    const response = await fetch(
+      `obtener_evaluaciones.php?id_usuario=${empleadoId}`
+    );
+    const data = await response.json();
+
+    console.log("Datos recibidos:", data);
+
+    const tbody = document.getElementById("evaluacionesBody");
+    if (!tbody) {
+      throw new Error("No se encontró el elemento tbody");
+    }
+
+    tbody.innerHTML = data
+      .map((eval) => {
+        // Asegurarnos de que tenemos un id_evaluacion
+        if (!eval.id_evaluacion) {
+          console.error("Evaluación sin ID:", eval);
+          return "";
+        }
+
+        // Crear el objeto de datos para el botón de manera segura
+        const evalData = {
+          id_evaluacion: eval.id_evaluacion, // Asegurarnos de incluir el ID
+          mes: eval.mes,
+          anio: eval.anio,
+          calificacion: eval.calificacion,
+          comentarios: (eval.comentarios || "").replace(/"/g, '\\"'), // Escapar comillas
+        };
+
+        return `
+              <tr>
+                  <td>${getNombreMes(Number(eval.mes))}</td>
+                  <td>${eval.anio}</td>
+                  <td class="evaluacion-valor">${Number(
+                    eval.calificacion
+                  ).toFixed(1)}</td>
+                  <td>${eval.comentarios || "-"}</td>
+                  <td class="action-buttons">
+                      <button type="button"
+                              class="btn-edit"
+                              data-eval-id="${eval.id_evaluacion}"
+                              onclick='editarEvaluacion({
+                                  "id_evaluacion": "${eval.id_evaluacion}",
+                                  "mes": ${eval.mes},
+                                  "anio": ${eval.anio},
+                                  "calificacion": ${eval.calificacion},
+                                  "comentarios": "${evalData.comentarios}"
+                              })'>
+                          <i class="fas fa-edit"></i>
+                      </button>
+                  </td>
+              </tr>`;
+      })
+      .join("");
+  } catch (error) {
+    console.error("Error al cargar evaluaciones:", error);
+    alert("Error al cargar las evaluaciones del empleado");
+  }
+}
+
+// Función para editar una evaluación existente
+function editarEvaluacion(evaluacion) {
+  try {
+    // Log detallado de los datos recibidos
+    console.log(
+      "%cDatos de evaluación recibidos",
+      "color: blue; font-weight: bold"
+    );
+    console.log("Tipo de evaluacion:", typeof evaluacion);
+    console.log("Evaluación completa:", evaluacion);
+    console.log("ID evaluación:", evaluacion.id_evaluacion);
+
+    // Validar que el ID de evaluación exista
+    if (!evaluacion || !evaluacion.id_evaluacion) {
+      console.error("ID de evaluación faltante:", evaluacion);
+      throw new Error("ID de evaluación no proporcionado");
+    }
+
+    // Asignar valores y verificar cada asignación
+    const campos = {
+      evaluacionId: document.getElementById("evaluacionId"),
+      mes: document.getElementById("mes"),
+      anio: document.getElementById("anio"),
+      calificacion: document.getElementById("calificacion"),
+      comentarios: document.getElementById("comentarios"),
+    };
+
+    // Verificar que todos los elementos existen
+    for (const [nombre, elemento] of Object.entries(campos)) {
+      if (!elemento) {
+        throw new Error(`Elemento ${nombre} no encontrado en el DOM`);
+      }
+    }
+
+    // Asignar valores
+    campos.evaluacionId.value = evaluacion.id_evaluacion;
+    campos.mes.value = evaluacion.mes;
+    campos.anio.value = evaluacion.anio;
+    campos.calificacion.value = evaluacion.calificacion;
+    campos.comentarios.value = evaluacion.comentarios || "";
+
+    // Log de verificación
+    console.log(
+      "%cValores asignados al formulario",
+      "color: green; font-weight: bold"
+    );
+    Object.entries(campos).forEach(([nombre, elemento]) => {
+      console.log(`${nombre}:`, elemento.value);
+    });
+
+    // Cambiar el texto del botón
+    const submitButton = document.querySelector(
+      '#evaluacionForm button[type="submit"]'
+    );
+    if (submitButton) {
+      submitButton.textContent = "Actualizar Evaluación";
+    }
+  } catch (error) {
+    console.error(
+      "%cError en editarEvaluacion:",
+      "color: red; font-weight: bold",
+      error
+    );
+    alert("Error al cargar los datos de la evaluación: " + error.message);
   }
 }
 
@@ -242,14 +484,19 @@ function abrirModalCrear() {
   modal.style.display = "block";
 }
 
-function abrirModalEditar(empleado) {
-  editandoId = empleado.id_usuarios;
-  document.getElementById("modalTitle").textContent = "Editar Empleado";
+async function abrirModalEditar(empleado) {
+  try {
+    editandoId = empleado.id_usuarios;
+    document.getElementById("modalTitle").textContent = "Editar Empleado";
 
-  cargarCatalogos().then(() => {
+    // Esperar a que se carguen los catálogos
+    await cargarCatalogos();
+
+    // Llenar todos los campos del formulario
     document.getElementById("nombre").value = empleado.nombre;
     document.getElementById("apellido").value = empleado.apellido;
-    document.getElementById("sexo").value = empleado.sexo;
+    document.getElementById("sexo").value =
+      empleado.sexo === "masculino" ? "M" : "F";
     document.getElementById("correo").value = empleado.correo;
     document.getElementById("edad").value = empleado.edad;
     document.getElementById("direccion").value = empleado.direccion;
@@ -257,9 +504,13 @@ function abrirModalEditar(empleado) {
     document.getElementById("id_departamento").value = empleado.id_departamento;
     document.getElementById("id_estado").value = empleado.id_estado;
     document.getElementById("estatus").value = empleado.estatus;
-  });
 
-  modal.style.display = "block";
+    // Mostrar el modal
+    modal.style.display = "block";
+  } catch (error) {
+    console.error("Error al abrir modal de edición:", error);
+    alert("Error al cargar los datos del empleado");
+  }
 }
 
 function cerrarModal() {
@@ -342,12 +593,85 @@ document.addEventListener("DOMContentLoaded", function () {
     btnNuevoEmpleado.addEventListener("click", abrirModalCrear);
   }
 
+  // Inicializar el modal de evaluación
+  const evaluacionModal = document.getElementById("evaluacionModal");
+  const evaluacionForm = document.getElementById("evaluacionForm");
+
+  // Añade esta función para debug
+  function logFormData(formData) {
+    console.group("Datos del formulario");
+    console.log("ID Evaluación:", formData.evaluacionId);
+    console.log("ID Usuario:", formData.id_usuario);
+    console.log("Mes:", formData.mes);
+    console.log("Año:", formData.anio);
+    console.log("Calificación:", formData.calificacion);
+    console.log("Comentarios:", formData.comentarios);
+    console.groupEnd();
+  }
+
+  // En tu evento submit del formulario
+  evaluacionForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const evaluacionId = document.getElementById("evaluacionId").value;
+    const empleadoId = document.getElementById("empleadoIdEval").value;
+
+    console.log("Iniciando actualización de evaluación");
+    console.log("ID Evaluación:", evaluacionId);
+    console.log("ID Empleado:", empleadoId);
+
+    if (!evaluacionId) {
+      console.error("No hay ID de evaluación");
+      alert("Error: No se encontró el ID de la evaluación");
+      return;
+    }
+
+    const datosEvaluacion = {
+      id_usuario: empleadoId,
+      mes: parseInt(document.getElementById("mes").value),
+      anio: parseInt(document.getElementById("anio").value),
+      calificacion: parseFloat(document.getElementById("calificacion").value),
+      comentarios: document.getElementById("comentarios").value,
+    };
+
+    logFormData({ evaluacionId, ...datosEvaluacion });
+
+    try {
+      const url = `actualizar_evaluacion.php?id=${evaluacionId}`;
+      console.log("URL de la petición:", url);
+      console.log("Datos a enviar:", datosEvaluacion);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(datosEvaluacion),
+      });
+
+      const result = await response.json();
+      console.log("Respuesta del servidor:", result);
+
+      if (result.success) {
+        console.log("Actualización exitosa");
+        await cargarEvaluacionesEmpleado(empleadoId);
+        alert("Evaluación actualizada exitosamente");
+      } else {
+        throw new Error(
+          result.error || "Error desconocido en la actualización"
+        );
+      }
+    } catch (error) {
+      console.error("Error en la actualización:", error);
+      alert("Error al actualizar la evaluación: " + error.message);
+    }
+  });
+
   const empleadoForm = document.getElementById("empleadoForm");
   if (empleadoForm) {
     empleadoForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      // Recoger todos los datos del formulario
       const datosEmpleado = {
         nombre: document.getElementById("nombre").value,
         apellido: document.getElementById("apellido").value,
@@ -362,9 +686,10 @@ document.addEventListener("DOMContentLoaded", function () {
       };
 
       try {
-        console.log("Datos a enviar:", datosEmpleado); // Debug
+        let url = "crud_operations.php?action=";
+        url += editandoId ? `update&id=${editandoId}` : "create";
 
-        const response = await fetch("crud_operations.php?action=create", {
+        const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -373,21 +698,33 @@ document.addEventListener("DOMContentLoaded", function () {
         });
 
         const result = await response.json();
-        console.log("Respuesta del servidor:", result); // Debug
 
         if (result.success) {
-          alert("Empleado creado exitosamente");
+          alert(
+            editandoId
+              ? "Empleado actualizado exitosamente"
+              : "Empleado creado exitosamente"
+          );
           cerrarModal();
-          // Recargar la tabla
-          const estadoActual = document.getElementById("estado").value;
-          await cargarEmpleados(estadoActual);
+
+          // Obtener el estado seleccionado actualmente
+          const estadoSeleccionado = document.getElementById("estado").value;
+
+          // Recargar datos usando el evento change del select
+          const estadoSelect = document.getElementById("estado");
+          if (estadoSelect) {
+            const event = new Event("change");
+            estadoSelect.dispatchEvent(event);
+          }
+
+          // Actualizar estadísticas
           await cargarEstadisticas();
         } else {
-          throw new Error(result.error || "Error al crear empleado");
+          throw new Error(result.error || "Error al procesar empleado");
         }
       } catch (error) {
         console.error("Error completo:", error);
-        alert("Error al crear empleado: " + error.message);
+        alert("Error al procesar empleado: " + error.message);
       }
     });
   }
@@ -429,28 +766,31 @@ document.addEventListener("DOMContentLoaded", function () {
         empleadosBody.innerHTML = data
           .map(
             (empleado) => `
-                    <tr>
-                        <td>${empleado.id_usuarios}</td>
-                        <td>${empleado.nombre}</td>
-                        <td>${empleado.apellido}</td>
-                        <td>${empleado.ocupacion || "No especificado"}</td>
-                        <td>${
-                          empleado.promedio_calificacion || "Sin evaluaciones"
-                        }</td>
-                        <td class="action-buttons">
-                            <button class="btn-edit" onclick='abrirModalEditar(${JSON.stringify(
-                              empleado
-                            )})'>
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn-delete" onclick="eliminarEmpleado(${
-                              empleado.id_usuarios
-                            })">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `
+          <tr>
+              <td>${empleado.id_usuarios}</td>
+              <td>${empleado.nombre}</td>
+              <td>${empleado.apellido}</td>
+              <td>${empleado.ocupacion || "No especificado"}</td>
+              <td>${empleado.promedio_calificacion || "Sin evaluaciones"}</td>
+              <td class="action-buttons">
+                  <button class="btn-evaluate" onclick='abrirModalEvaluacion(${
+                    empleado.id_usuarios
+                  }, "${empleado.nombre} ${empleado.apellido}")'>
+                      <i class="fas fa-star"></i>
+                  </button>
+                  <button class="btn-edit" onclick='abrirModalEditar(${JSON.stringify(
+                    empleado
+                  )})'>
+                      <i class="fas fa-edit"></i>
+                  </button>
+                  <button class="btn-delete" onclick="eliminarEmpleado(${
+                    empleado.id_usuarios
+                  })">
+                      <i class="fas fa-trash"></i>
+                  </button>
+              </td>
+          </tr>
+      `
           )
           .join("");
 

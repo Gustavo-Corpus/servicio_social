@@ -17,48 +17,53 @@ function obtenerEstados() {
 function obtenerEmpleadosPorEstado($idEstado) {
   global $pdo;
   try {
-      // Si el ID es "todos", obtener todos los empleados
+      // Consulta base con todos los campos necesarios
+      $baseQuery = "
+          SELECT
+              u.id_usuarios,
+              u.nombre,
+              u.apellido,
+              u.sexo,
+              u.estatus,
+              u.correo,
+              u.edad,
+              u.direccion,
+              u.ocupacion,
+              u.id_departamento,
+              u.id_estado,
+              ROUND(AVG(e.calificacion), 1) as promedio_calificacion
+          FROM
+              usuarios u
+              LEFT JOIN evaluaciones e ON u.id_usuarios = e.id_usuario
+      ";
+
       if ($idEstado === 'todos') {
-          $query = "
-              SELECT
-                  u.id_usuarios,
-                  u.nombre,
-                  u.apellido,
-                  u.ocupacion,
-                  ROUND(AVG(e.calificacion), 1) as promedio_calificacion
-              FROM
-                  usuarios u
-                  LEFT JOIN evaluaciones e ON u.id_usuarios = e.id_usuario
+          $query = $baseQuery . "
               GROUP BY
-                  u.id_usuarios, u.nombre, u.apellido, u.ocupacion
+                  u.id_usuarios, u.nombre, u.apellido, u.sexo, u.estatus,
+                  u.correo, u.edad, u.direccion, u.ocupacion,
+                  u.id_departamento, u.id_estado
               ORDER BY
                   u.apellido, u.nombre
           ";
           $stmt = $pdo->prepare($query);
           $stmt->execute();
       } else {
-          // Consulta original para un estado específico
-          $query = "
-              SELECT
-                  u.id_usuarios,
-                  u.nombre,
-                  u.apellido,
-                  u.ocupacion,
-                  ROUND(AVG(e.calificacion), 1) as promedio_calificacion
-              FROM
-                  usuarios u
-                  LEFT JOIN evaluaciones e ON u.id_usuarios = e.id_usuario
+          $query = $baseQuery . "
               WHERE
                   u.id_estado = :idEstado
               GROUP BY
-                  u.id_usuarios, u.nombre, u.apellido, u.ocupacion
+                  u.id_usuarios, u.nombre, u.apellido, u.sexo, u.estatus,
+                  u.correo, u.edad, u.direccion, u.ocupacion,
+                  u.id_departamento, u.id_estado
               ORDER BY
                   u.apellido, u.nombre
           ";
           $stmt = $pdo->prepare($query);
           $stmt->execute(['idEstado' => $idEstado]);
       }
-      return $stmt->fetchAll();
+
+      return $stmt->fetchAll(PDO::FETCH_ASSOC);
   } catch (PDOException $e) {
       error_log("Error al obtener empleados: " . $e->getMessage());
       throw new Exception("Error al obtener la lista de empleados");
